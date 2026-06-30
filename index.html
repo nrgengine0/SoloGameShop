@@ -505,36 +505,31 @@
         }
 
         // 🔄 Realtime Synchronization Logic
-        // 🔄 Realtime Synchronization Logic
-function setupRealtimeListener() {
-    // ပထမဆုံး အကြိမ် Data ဆွဲယူခြင်း
-    supabase.from('game_records').select('*').then(({ data }) => {
-        if (data) {
-            records = data;
-            updateSidebarAndHome();
-            if(currentView !== 'Home' && currentView !== 'Settings') renderTable();
-        }
-    });
+        function setupRealtimeListener() {
+            supabase.from('game_records').select('*').then(({ data }) => {
+                if (data) {
+                    records = data;
+                    updateSidebarAndHome();
+                    if(currentView !== 'Home' && currentView !== 'Settings') renderTable();
+                }
+            });
 
-    // Realtime အပြောင်းအလဲများကို နားထောင်ခြင်း
-    supabase.channel('custom-db-channel')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'game_records' }, (payload) => {
-        // Data အသစ်ဝင်လာရင် သို့မဟုတ် ပြင်လိုက်ရင် အလိုအလျောက် Update လုပ်ပေးမည်
-        if (payload.eventType === 'INSERT') {
-            records.push(payload.new);
-        } else if (payload.eventType === 'UPDATE') {
-            const index = records.findIndex(r => r.id === payload.new.id);
-            if (index !== -1) records[index] = payload.new;
-        } else if (payload.eventType === 'DELETE') {
-            records = records.filter(r => r.id !== payload.old.id);
+            supabase.channel('custom-db-channel')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'game_records' }, (payload) => {
+                if (payload.eventType === 'INSERT') {
+                    records.push(payload.new);
+                } else if (payload.eventType === 'UPDATE') {
+                    const index = records.findIndex(r => r.id === payload.new.id);
+                    if (index !== -1) records[index] = payload.new;
+                } else if (payload.eventType === 'DELETE') {
+                    records = records.filter(r => r.id !== payload.old.id);
+                }
+                
+                updateSidebarAndHome();
+                if(currentView !== 'Home' && currentView !== 'Settings') renderTable();
+            })
+            .subscribe();
         }
-        
-        updateSidebarAndHome();
-        if(currentView !== 'Home' && currentView !== 'Settings') renderTable();
-    })
-    .subscribe();
-}
-
 
         // Initial Setup
         updateSidebarAndHome();
