@@ -6,7 +6,6 @@
     <title>Game Sales Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .glass-panel { background: rgba(31, 41, 55, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
@@ -161,19 +160,16 @@
 
     <script>
         let currentView = 'Home'; 
-        let records = []; 
+        let records = JSON.parse(localStorage.getItem('gameRecords')) || [];
         let customGames = JSON.parse(localStorage.getItem('customGames')) || [];
-
-        // ⚙️ သင်ပေးပို့ထားသော Supabase Configuration များ
-        const SUPABASE_URL = "https://cpkxmeqzjzvqslggoort.supabase.co";
-        const SUPABASE_ANON_KEY = "sb_publishable_Sl-svgLDfh8Zai9hzEmK4A_y6DGUiJ-";
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         document.getElementById('recordDate').valueAsDate = new Date();
 
+        // Responsive Sidebar Toggle
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
+            
             if (sidebar.classList.contains('-translate-x-full')) {
                 sidebar.classList.remove('-translate-x-full');
                 overlay.classList.remove('hidden');
@@ -183,6 +179,7 @@
             }
         }
 
+        // Register custom game
         function addCustomGame() {
             const name = document.getElementById('customGameName').value.trim();
             const currency = document.getElementById('customGameCurrency').value.trim();
@@ -191,6 +188,7 @@
                 alert('GAME NAME နှင့် 💵 နေရာကို ပြည့်စုံအောင် ဖြည့်ပေးပါ!');
                 return;
             }
+
             if(customGames.some(g => g.id.toLowerCase() === name.toLowerCase()) || name === 'PUBG' || name === 'MLBB') {
                 alert('ဒီဂိမ်းအမည် ရှိပြီးသားဖြစ်နေပါတယ်!');
                 return;
@@ -198,8 +196,10 @@
 
             customGames.push({ id: name, name: name, currency: currency });
             localStorage.setItem('customGames', JSON.stringify(customGames));
+            
             document.getElementById('customGameName').value = '';
             document.getElementById('customGameCurrency').value = '';
+            
             alert(`${name} ဂိမ်းကို အောင်မြင်စွာ ထည့်သွင်းလိုက်ပါပြီ။`);
             updateSidebarAndHome();
             renderSettingsCustomGamesList();
@@ -209,23 +209,26 @@
             if(confirm(`"${gameName}" ဂိမ်းနှင့် ၎င်း၏အရောင်းမှတ်တမ်းများအားလုံးကို ဖျက်ရန် သေချာပါသလား?`)) {
                 customGames = customGames.filter(g => g.id !== gameId);
                 localStorage.setItem('customGames', JSON.stringify(customGames));
-                
-                supabase.from('game_records').delete().eq('game', gameId).then(() => {
-                    if(currentView === gameId) currentView = 'Home';
-                    updateSidebarAndHome();
-                    renderSettingsCustomGamesList();
-                    switchView(currentView);
-                });
+                records = records.filter(r => r.game !== gameId);
+                localStorage.setItem('gameRecords', JSON.stringify(records));
+
+                if(currentView === gameId) currentView = 'Home';
+
+                updateSidebarAndHome();
+                renderSettingsCustomGamesList();
+                switchView(currentView);
             }
         }
 
         function renderSettingsCustomGamesList() {
             const listContainer = document.getElementById('customGamesDeleteList');
             listContainer.innerHTML = '';
+
             if(customGames.length === 0) {
                 listContainer.innerHTML = '<p class="text-xs text-gray-500 pt-2">ကိုယ်တိုင်ထည့်ထားသော ဂိမ်းမရှိသေးပါ</p>';
                 return;
             }
+
             customGames.forEach(game => {
                 listContainer.innerHTML += `
                     <div class="flex justify-between items-center pt-3">
@@ -250,11 +253,14 @@
                     <li><a href="#" id="menu_${game.id}" onclick="switchView('${game.id}')" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700"><i class="fa-solid fa-gamepad w-6 text-purple-400"></i> ${game.currency} မှတ်ရန်</a></li>
                 `;
             });
+            
             if(currentView === 'Home') calculateTotalsAndRenderCards();
         }
 
         function switchView(view) {
             currentView = view;
+            
+            // Auto close mobile sidebar on menu click
             const sidebar = document.getElementById('sidebar');
             if (!sidebar.classList.contains('-translate-x-full')) {
                 toggleSidebar();
@@ -296,7 +302,7 @@
             else {
                 headerActions.style.display = 'flex';
                 tableSection.style.display = 'block';
-                mobileSearch.style.display = 'block';
+                mobileSearch.style.display = 'block'; // Mobile search field visible
 
                 if (view === 'PUBG') {
                     title.innerHTML = '<i class="fa-solid fa-gamepad"></i> PUBG MOBILE';
@@ -333,8 +339,8 @@
             const grid = document.getElementById('HomeGrid');
             grid.innerHTML = '';
 
-            const pubgTotal = records.filter(r => r.game === 'PUBG').reduce((sum, r) => sum + r.sale_price, 0);
-            const mlbbTotal = records.filter(r => r.game === 'MLBB').reduce((sum, r) => sum + r.sale_price, 0);
+            const pubgTotal = records.filter(r => r.game === 'PUBG').reduce((sum, r) => sum + r.salePrice, 0);
+            const mlbbTotal = records.filter(r => r.game === 'MLBB').reduce((sum, r) => sum + r.salePrice, 0);
 
             grid.innerHTML += `
                 <div class="glass-panel p-5 lg:p-6 rounded-2xl relative overflow-hidden border-l-4 border-l-orange-500">
@@ -352,7 +358,7 @@
             `;
 
             customGames.forEach(game => {
-                const total = records.filter(r => r.game === game.id).reduce((sum, r) => sum + r.sale_price, 0);
+                const total = records.filter(r => r.game === game.id).reduce((sum, r) => sum + r.salePrice, 0);
                 grid.innerHTML += `
                     <div class="glass-panel p-5 lg:p-6 rounded-2xl relative overflow-hidden border-l-4 border-l-purple-500">
                         <div class="absolute right-4 top-4 text-purple-500/10 text-6xl font-bold">💵</div>
@@ -370,7 +376,7 @@
 
             const filteredRecords = records.filter(r => 
                 r.game === currentView && 
-                (r.date.includes(searchTerm) || r.amount.toString().includes(searchTerm) || r.sale_price.toString().includes(searchTerm))
+                (r.date.includes(searchTerm) || r.amount.toString().includes(searchTerm) || r.salePrice.toString().includes(searchTerm))
             );
 
             if(filteredRecords.length === 0) {
@@ -382,7 +388,7 @@
                 table.innerHTML += `
                     <tr class="hover:bg-gray-800/50 transition duration-200">
                         <td class="p-3 lg:p-4 font-semibold text-white">${formatNumber(record.amount)}</td>
-                        <td class="p-3 lg:p-4 text-emerald-400 font-medium">${formatNumber(record.sale_price)}</td>
+                        <td class="p-3 lg:p-4 text-emerald-400 font-medium">${formatNumber(record.salePrice)}</td>
                         <td class="p-3 lg:p-4 text-gray-400">${record.date}</td>
                         <td class="p-3 lg:p-4 text-center whitespace-nowrap">
                             <button onclick="editRecord(${record.id})" class="text-blue-400 hover:text-blue-300 mx-2 transition"><i class="fa-solid fa-pen-to-square"></i></button>
@@ -408,7 +414,7 @@
                 const record = records.find(r => r.id === id);
                 document.getElementById('recordId').value = record.id;
                 document.getElementById('currencyAmount').value = record.amount;
-                document.getElementById('salePrice').value = record.sale_price;
+                document.getElementById('salePrice').value = record.salePrice;
                 document.getElementById('recordDate').value = record.date;
             } else {
                 document.getElementById('modalTitle').innerText = 'မှတ်တမ်း အသစ်ထည့်ရန်';
@@ -430,44 +436,57 @@
             }, 200);
         }
 
-        async function saveRecord() {
+        function saveRecord() {
             const id = document.getElementById('recordId').value;
             const amount = parseFloat(document.getElementById('currencyAmount').value) || 0;
-            const sale_price = parseFloat(document.getElementById('salePrice').value) || 0;
+            const salePrice = parseFloat(document.getElementById('salePrice').value) || 0;
             const date = document.getElementById('recordDate').value;
 
             if (id) {
-                await supabase.from('game_records').update({ amount, sale_price, date }).eq('id', parseInt(id));
+                const index = records.findIndex(r => r.id === parseInt(id));
+                records[index] = { ...records[index], amount, salePrice, date };
             } else {
-                await supabase.from('game_records').insert([{ id: Date.now(), game: currentView, amount, sale_price, date }]);
+                records.push({
+                    id: Date.now(),
+                    game: currentView,
+                    amount,
+                    salePrice,
+                    date
+                });
             }
-            closeModal();
-        }
 
-        async function deleteRecord(id) {
-            if(confirm('ဒီမှတ်တမ်းကို ဖျက်မှာ သေချာပြီလား?')) {
-                await supabase.from('game_records').delete().eq('id', id);
-            }
+            localStorage.setItem('gameRecords', JSON.stringify(records));
+            closeModal();
+            renderTable();
         }
 
         function editRecord(id) {
             openModal(id);
         }
 
+        function deleteRecord(id) {
+            if(confirm('ဒီမှတ်တမ်းကို ဖျက်မှာ သေချာပြီလား?')) {
+                records = records.filter(r => r.id !== id);
+                localStorage.setItem('gameRecords', JSON.stringify(records));
+                renderTable();
+            }
+        }
+
+        // Search Actions for Desktop and Mobile inputs
         function searchTable() {
             const term = document.getElementById('searchInput').value.toLowerCase();
-            document.getElementById('mobileSearchInput').value = term;
+            document.getElementById('mobileSearchInput').value = term; // Sync with mobile
             renderTable(term);
         }
         function searchTableMobile() {
             const term = document.getElementById('mobileSearchInput').value.toLowerCase();
-            document.getElementById('searchInput').value = term;
+            document.getElementById('searchInput').value = term; // Sync with desktop
             renderTable(term);
         }
 
-        async function exportData() {
-            const { data } = await supabase.from('game_records').select('*');
-            const dataToExport = { records: data, customGames };
+        // Backup Actions
+        function exportData() {
+            const dataToExport = { records, customGames };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport));
             const downloadAnchor = document.createElement('a');
             downloadAnchor.setAttribute("href", dataStr);
@@ -477,26 +496,25 @@
             downloadAnchor.remove();
         }
 
-        async function importData(event) {
+        function importData(event) {
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = async function(e) {
+            reader.onload = function(e) {
                 try {
                     const imported = JSON.parse(e.target.result);
-                    let recordsToImport = [];
                     if (imported.records && imported.customGames) {
-                        recordsToImport = imported.records;
+                        records = imported.records;
                         customGames = imported.customGames;
+                        localStorage.setItem('gameRecords', JSON.stringify(records));
                         localStorage.setItem('customGames', JSON.stringify(customGames));
                     } else if (Array.isArray(imported)) {
-                        recordsToImport = imported;
+                        records = imported;
+                        localStorage.setItem('gameRecords', JSON.stringify(records));
                     }
-                    
-                    if(recordsToImport.length > 0) {
-                        await supabase.from('game_records').upsert(recordsToImport);
-                    }
-                    alert('Data အားလုံးကို Server ပေါ်သို့ အောင်မြင်စွာ တင်ပြီးပါပြီ။');
+                    alert('Data အားလုံးကို အောင်မြင်စွာ ပြန်ထည့်သွင်းပြီးပါပြီ။');
+                    updateSidebarAndHome();
+                    switchView('Home');
                 } catch (err) {
                     alert('ဖိုင်ဖတ်ရတာ မအောင်မြင်ပါ။');
                 }
@@ -504,36 +522,8 @@
             reader.readAsText(file);
         }
 
-        // 🔄 Realtime Synchronization Logic
-        function setupRealtimeListener() {
-            supabase.from('game_records').select('*').then(({ data }) => {
-                if (data) {
-                    records = data;
-                    updateSidebarAndHome();
-                    if(currentView !== 'Home' && currentView !== 'Settings') renderTable();
-                }
-            });
-
-            supabase.channel('custom-db-channel')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'game_records' }, (payload) => {
-                if (payload.eventType === 'INSERT') {
-                    records.push(payload.new);
-                } else if (payload.eventType === 'UPDATE') {
-                    const index = records.findIndex(r => r.id === payload.new.id);
-                    if (index !== -1) records[index] = payload.new;
-                } else if (payload.eventType === 'DELETE') {
-                    records = records.filter(r => r.id !== payload.old.id);
-                }
-                
-                updateSidebarAndHome();
-                if(currentView !== 'Home' && currentView !== 'Settings') renderTable();
-            })
-            .subscribe();
-        }
-
         // Initial Setup
         updateSidebarAndHome();
-        setupRealtimeListener();
         switchView('Home');
     </script>
 </body>
