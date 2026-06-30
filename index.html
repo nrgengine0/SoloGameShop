@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="my">
 <head>
@@ -57,6 +58,10 @@
                 <li class="pt-4 pb-1"><span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">⚔️ MOBILE LEGENDS</span></li>
                 <li><a href="#" id="menuMLBB" onclick="switchView('MLBB')" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700"><i class="fa-solid fa-gem w-6 text-blue-400"></i> Diamond မှတ်ရန်</a></li>
 
+                <!-- MENU အသစ် - အထွက် Note သီးသန့် ကဏ္ဍ -->
+                <li class="pt-4 pb-1"><span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">📝 EXPENSE NOTE</span></li>
+                <li><a href="#" id="menuExpenseNote" onclick="switchView('ExpenseNote')" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700"><i class="fa-solid fa-file-invoice-dollar w-6 text-red-400"></i> အထွက် Note ထည့်ရန်</a></li>
+
                 <div id="customGamesMenu"></div>
 
                 <li class="pt-6 border-t border-gray-800 mt-4"><a href="#" id="menuSettings" onclick="switchView('Settings')" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700"><i class="fa-solid fa-gear w-6 text-gray-400"></i> Settings</a></li>
@@ -90,26 +95,32 @@
                 <input type="text" id="mobileSearchInput" onkeyup="searchTableMobile()" placeholder="🔍 ရှာရန်..." class="w-full bg-gray-800 text-white rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none border border-gray-600">
             </div>
 
+            <!-- Home Dashboard / Grid -->
             <div id="HomeSection" class="space-y-6">
                 <div id="HomeGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6"></div>
             </div>
 
+            <!-- Table Section for Records -->
             <div id="tableSection" class="glass-panel rounded-xl shadow-xl overflow-hidden" style="display: none;">
                 <div class="overflow-x-auto w-full">
                     <table class="w-full text-left border-collapse min-w-[500px]">
                         <thead>
                             <tr class="bg-gray-800 text-gray-300 border-b border-gray-700 text-sm">
                                 <th class="p-3 lg:p-4" id="currencyHeader">Uc</th>
-                                <th class="p-3 lg:p-4">ရောင်းဈေး</th>
+                                <th class="p-3 lg:p-4" id="priceHeader">ရောင်းဈေး</th>
                                 <th class="p-3 lg:p-4">နေ့စွဲ</th>
                                 <th class="p-3 lg:p-4 text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody id="dataTable" class="divide-y divide-gray-800 text-sm"></tbody>
+                        <tfoot id="tableFooter" class="bg-gray-800/50 font-bold border-t border-gray-700 text-sm">
+                            <!-- Footer total is dynamically populated here -->
+                        </tfoot>
                     </table>
                 </div>
             </div>
 
+            <!-- Settings Section -->
             <div id="settingsSection" class="max-w-xl mx-auto space-y-6" style="display: none;">
                 <div class="glass-panel p-4 lg:p-6 rounded-2xl border border-dashed border-indigo-500/40">
                     <h3 class="text-md lg:text-lg font-bold text-indigo-400 mb-4"><i class="fa-solid fa-square-plus"></i> Add Other Game</h3>
@@ -136,19 +147,36 @@
         </div>
     </main>
 
+    <!-- Modal Form (Supports Normal Amount/Price and Expense Note) -->
     <div id="recordModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden justify-center items-center z-50 p-4">
         <div class="bg-gray-800 rounded-xl p-5 lg:p-6 w-full max-w-sm border border-gray-700 shadow-2xl transform transition-all scale-95 opacity-0" id="modalContent">
             <h3 class="text-lg font-bold mb-4" id="modalTitle">မှတ်တမ်း အသစ်ထည့်ရန်</h3>
             <input type="hidden" id="recordId">
             <div class="space-y-4">
-                <div>
-                    <label class="block text-xs lg:text-sm text-gray-400 mb-1" id="modalCurrencyLabel">Amount</label>
-                    <input type="number" id="currencyAmount" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 text-white outline-none">
+                <!-- Standard Inputs (Uc/Diamond/Custom Currency) -->
+                <div id="standardInputsContainer">
+                    <div class="mb-4">
+                        <label class="block text-xs lg:text-sm text-gray-400 mb-1" id="modalCurrencyLabel">Amount</label>
+                        <input type="number" id="currencyAmount" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs lg:text-sm text-gray-400 mb-1">ရောင်းဈေး (Sale Price)</label>
+                        <input type="number" id="salePrice" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 text-white outline-none">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-xs lg:text-sm text-gray-400 mb-1">ရောင်းဈေး (Sale Price)</label>
-                    <input type="number" id="salePrice" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 text-white outline-none">
+
+                <!-- Expense Note Input Fields (Shown dynamically only for ExpenseNote view) -->
+                <div id="expenseInputsContainer" class="hidden">
+                    <div class="mb-4">
+                        <label class="block text-xs lg:text-sm text-gray-400 mb-1">အကြောင်းအရာ (Note / Item)</label>
+                        <input type="text" id="expenseItem" placeholder="ဥပမာ - coin 1000" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs lg:text-sm text-gray-400 mb-1">ဝယ်ဈေး / အထွက်ငွေ (Cost)</label>
+                        <input type="number" id="expenseCost" placeholder="ဥပမာ - 83500" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 text-white outline-none">
+                    </div>
                 </div>
+
                 <div>
                     <label class="block text-xs lg:text-sm text-gray-400 mb-1">နေ့စွဲ (Date)</label>
                     <input type="date" id="recordDate" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 text-white outline-none">
@@ -216,7 +244,7 @@
             const currency = document.getElementById('customGameCurrency').value.trim();
 
             if(!name || !currency) return alert('ဖြည့်စွက်ပေးရန် လိုအပ်ပါသည်။');
-            if(customGames.some(g => g.id.toLowerCase() === name.toLowerCase()) || name==='PUBG' || name==='MLBB') {
+            if(customGames.some(g => g.id.toLowerCase() === name.toLowerCase()) || name==='PUBG' || name==='MLBB' || name==='ExpenseNote') {
                 return alert('ဂိမ်းအမည် ရှိပြီးသားဖြစ်နေသည်။');
             }
 
@@ -278,6 +306,7 @@
 
             const title = document.getElementById('pageTitle');
             const currencyHeader = document.getElementById('currencyHeader');
+            const priceHeader = document.getElementById('priceHeader');
             const modalLabel = document.getElementById('modalCurrencyLabel');
             const headerActions = document.getElementById('headerActions');
             const HomeSection = document.getElementById('HomeSection');
@@ -304,16 +333,20 @@
                 renderSettingsCustomGamesList();
             } else {
                 headerActions.style.display = 'flex'; tableSection.style.display = 'block'; mobileSearch.style.display = 'block';
+                
                 if (view === 'PUBG') {
-                    title.innerHTML = 'PUBG MOBILE'; currencyHeader.innerText = 'Uc'; modalLabel.innerText = 'Uc Amount';
+                    title.innerHTML = 'PUBG MOBILE'; currencyHeader.innerText = 'Uc'; priceHeader.innerText = 'ရောင်းဈေး'; modalLabel.innerText = 'Uc Amount';
                     document.getElementById('menuPUBG').className = "block px-4 py-2 rounded-lg bg-gray-800 border-l-4 border-orange-500 transition";
                 } else if (view === 'MLBB') {
-                    title.innerHTML = 'MOBILE LEGENDS'; currencyHeader.innerText = 'Diamond'; modalLabel.innerText = 'Diamond Amount';
+                    title.innerHTML = 'MOBILE LEGENDS'; currencyHeader.innerText = 'Diamond'; priceHeader.innerText = 'ရောင်းဈေး'; modalLabel.innerText = 'Diamond Amount';
                     document.getElementById('menuMLBB').className = "block px-4 py-2 rounded-lg bg-gray-800 border-l-4 border-blue-500 transition";
+                } else if (view === 'ExpenseNote') {
+                    title.innerHTML = 'EXPENSE NOTE'; currencyHeader.innerText = 'အကြောင်းအရာ (Note)'; priceHeader.innerText = 'ဝယ်ဈေး / အထွက်ငွေ (Cost)';
+                    document.getElementById('menuExpenseNote').className = "block px-4 py-2 rounded-lg bg-gray-800 border-l-4 border-red-500 transition";
                 } else {
                     const game = customGames.find(g => g.id === view);
                     if(game) {
-                        title.innerHTML = game.name; currencyHeader.innerText = game.currency; modalLabel.innerText = `${game.currency} Amount`;
+                        title.innerHTML = game.name; currencyHeader.innerText = game.currency; priceHeader.innerText = 'ရောင်းဈေး'; modalLabel.innerText = `${game.currency} Amount`;
                         const m = document.getElementById(`menu_${view}`); if(m) m.className = "block px-4 py-2 rounded-lg bg-gray-800 border-l-4 border-purple-500 transition";
                     }
                 }
@@ -323,8 +356,13 @@
 
         function calculateTotalsAndRenderCards() {
             const grid = document.getElementById('HomeGrid'); grid.innerHTML = '';
-            const pubgTotal = records.filter(r => r.game === 'PUBG').reduce((sum, r) => sum + r.salePrice, 0);
-            const mlbbTotal = records.filter(r => r.game === 'MLBB').reduce((sum, r) => sum + r.salePrice, 0);
+            
+            // Calculate traditional game totals
+            const pubgTotal = records.filter(r => r.game === 'PUBG').reduce((sum, r) => sum + (parseFloat(r.salePrice) || 0), 0);
+            const mlbbTotal = records.filter(r => r.game === 'MLBB').reduce((sum, r) => sum + (parseFloat(r.salePrice) || 0), 0);
+            
+            // Calculate total expenses (အထွက် Note စုစုပေါင်း)
+            const expenseTotal = records.filter(r => r.game === 'ExpenseNote').reduce((sum, r) => sum + (parseFloat(r.salePrice) || 0), 0);
 
             grid.innerHTML += `
                 <div class="glass-panel p-5 lg:p-6 rounded-2xl relative overflow-hidden border-l-4 border-l-orange-500">
@@ -336,10 +374,16 @@
                     <div class="absolute right-4 top-4 text-blue-500/10 text-6xl font-bold">⚔️</div>
                     <h4 class="text-gray-400 text-xs font-bold mb-2">MOBILE LEGENDS</h4>
                     <p class="text-2xl font-extrabold text-blue-400">${mlbbTotal.toLocaleString()} Ks</p>
+                </div>
+                <!-- Expense Note Dashboard Card -->
+                <div class="glass-panel p-5 lg:p-6 rounded-2xl relative overflow-hidden border-l-4 border-l-red-500">
+                    <div class="absolute right-4 top-4 text-red-500/10 text-6xl font-bold">📝</div>
+                    <h4 class="text-gray-400 text-xs font-bold mb-2">အထွက် စုစုပေါင်း (EXPENSES)</h4>
+                    <p class="text-2xl font-extrabold text-red-400">${expenseTotal.toLocaleString()} Ks</p>
                 </div>`;
 
             customGames.forEach(game => {
-                const total = records.filter(r => r.game === game.id).reduce((sum, r) => sum + r.salePrice, 0);
+                const total = records.filter(r => r.game === game.id).reduce((sum, r) => sum + (parseFloat(r.salePrice) || 0), 0);
                 grid.innerHTML += `
                     <div class="glass-panel p-5 lg:p-6 rounded-2xl relative overflow-hidden border-l-4 border-l-purple-500">
                         <div class="absolute right-4 top-4 text-purple-500/10 text-6xl font-bold">💵</div>
@@ -351,44 +395,105 @@
 
         function renderTable(searchTerm = '') {
             const table = document.getElementById('dataTable'); table.innerHTML = '';
-            const filtered = records.filter(r => r.game === currentView && (r.date.includes(searchTerm) || r.amount.toString().includes(searchTerm) || r.salePrice.toString().includes(searchTerm)));
+            const footer = document.getElementById('tableFooter'); footer.innerHTML = '';
+
+            const filtered = records.filter(r => r.game === currentView && (
+                r.date.includes(searchTerm) || 
+                r.amount.toString().includes(searchTerm) || 
+                r.salePrice.toString().includes(searchTerm)
+            ));
 
             if(filtered.length === 0) {
                 table.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-500">မှတ်တမ်း မရှိသေးပါ</td></tr>`;
                 return;
             }
+
+            let sumValue = 0;
+
             filtered.forEach(record => {
-                table.innerHTML += `
-                    <tr class="hover:bg-gray-800/50 transition">
-                        <td class="p-3 lg:p-4 font-semibold text-white">${record.amount.toLocaleString()}</td>
-                        <td class="p-3 lg:p-4 text-emerald-400 font-medium">${record.salePrice.toLocaleString()}</td>
-                        <td class="p-3 lg:p-4 text-gray-400">${record.date}</td>
-                        <td class="p-3 lg:p-4 text-center whitespace-nowrap">
-                            <button onclick="editRecord('${record.firebaseKey}')" class="text-blue-400 hover:text-blue-300 mx-2"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button onclick="deleteRecord('${record.firebaseKey}')" class="text-red-400 hover:text-red-300 mx-2"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    </tr>`;
+                const saleVal = parseFloat(record.salePrice) || 0;
+                sumValue += saleVal;
+
+                // Render dynamically based on whether it is an Expense Note or standard game record
+                if (currentView === 'ExpenseNote') {
+                    table.innerHTML += `
+                        <tr class="hover:bg-gray-800/50 transition">
+                            <td class="p-3 lg:p-4 text-gray-200 font-medium">${record.amount}</td> <!-- Amount variable stores text note for Expense -->
+                            <td class="p-3 lg:p-4 text-red-400 font-semibold">${saleVal.toLocaleString()} Ks</td>
+                            <td class="p-3 lg:p-4 text-gray-400">${record.date}</td>
+                            <td class="p-3 lg:p-4 text-center whitespace-nowrap">
+                                <button onclick="editRecord('${record.firebaseKey}')" class="text-blue-400 hover:text-blue-300 mx-2"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteRecord('${record.firebaseKey}')" class="text-red-400 hover:text-red-300 mx-2"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>`;
+                } else {
+                    table.innerHTML += `
+                        <tr class="hover:bg-gray-800/50 transition">
+                            <td class="p-3 lg:p-4 font-semibold text-white">${parseFloat(record.amount).toLocaleString()}</td>
+                            <td class="p-3 lg:p-4 text-emerald-400 font-medium">${saleVal.toLocaleString()} Ks</td>
+                            <td class="p-3 lg:p-4 text-gray-400">${record.date}</td>
+                            <td class="p-3 lg:p-4 text-center whitespace-nowrap">
+                                <button onclick="editRecord('${record.firebaseKey}')" class="text-blue-400 hover:text-blue-300 mx-2"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteRecord('${record.firebaseKey}')" class="text-red-400 hover:text-red-300 mx-2"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>`;
+                }
             });
+
+            // Set Footer with dynamic styling & totals
+            if (currentView === 'ExpenseNote') {
+                footer.innerHTML = `
+                    <tr class="bg-gray-800/80">
+                        <td class="p-3 lg:p-4 text-gray-300">Total Expenses:</td>
+                        <td class="p-3 lg:p-4 text-red-400 font-extrabold text-base" colspan="3">Total: ${sumValue.toLocaleString()} Ks</td>
+                    </tr>`;
+            } else {
+                footer.innerHTML = `
+                    <tr class="bg-gray-800/80">
+                        <td class="p-3 lg:p-4 text-gray-300">Total:</td>
+                        <td class="p-3 lg:p-4 text-emerald-400 font-extrabold text-base" colspan="3">${sumValue.toLocaleString()} Ks</td>
+                    </tr>`;
+            }
         }
 
         function openModal(firebaseKey = null) {
             const modal = document.getElementById('recordModal');
             const content = document.getElementById('modalContent');
+            const standardInputs = document.getElementById('standardInputsContainer');
+            const expenseInputs = document.getElementById('expenseInputsContainer');
+
             modal.classList.remove('hidden'); modal.classList.add('flex');
             setTimeout(() => content.classList.remove('scale-95', 'opacity-0'), 10);
+
+            // Shift form fields dynamically based on view type
+            if (currentView === 'ExpenseNote') {
+                standardInputs.classList.add('hidden');
+                expenseInputs.classList.remove('hidden');
+            } else {
+                standardInputs.classList.remove('hidden');
+                expenseInputs.classList.add('hidden');
+            }
 
             if (firebaseKey) {
                 document.getElementById('modalTitle').innerText = 'မှတ်တမ်း ပြင်ဆင်ရန်';
                 const record = records.find(r => r.firebaseKey === firebaseKey);
                 document.getElementById('recordId').value = record.firebaseKey;
-                document.getElementById('currencyAmount').value = record.amount;
-                document.getElementById('salePrice').value = record.salePrice;
+                
+                if (currentView === 'ExpenseNote') {
+                    document.getElementById('expenseItem').value = record.amount; // Notes stored in amount key
+                    document.getElementById('expenseCost').value = record.salePrice;
+                } else {
+                    document.getElementById('currencyAmount').value = record.amount;
+                    document.getElementById('salePrice').value = record.salePrice;
+                }
                 document.getElementById('recordDate').value = record.date;
             } else {
                 document.getElementById('modalTitle').innerText = 'မှတ်တမ်း အသစ်ထည့်ရန်';
                 document.getElementById('recordId').value = '';
                 document.getElementById('currencyAmount').value = '';
                 document.getElementById('salePrice').value = '';
+                document.getElementById('expenseItem').value = '';
+                document.getElementById('expenseCost').value = '';
                 document.getElementById('recordDate').valueAsDate = new Date();
             }
         }
@@ -401,11 +506,19 @@
 
         function saveRecord() {
             const firebaseKey = document.getElementById('recordId').value;
-            const amount = parseFloat(document.getElementById('currencyAmount').value) || 0;
-            const salePrice = parseFloat(document.getElementById('salePrice').value) || 0;
             const date = document.getElementById('recordDate').value;
+            let amount, salePrice;
 
-            const { db, ref, push, set, update } = window.dbRef;
+            if (currentView === 'ExpenseNote') {
+                amount = document.getElementById('expenseItem').value.trim(); // store text item
+                salePrice = parseFloat(document.getElementById('expenseCost').value) || 0; // store cost/expense amount
+                if (!amount) return alert('မှတ်တမ်းမှတ်စု အကြောင်းအရာ ရေးသားရန် လိုအပ်ပါသည်။');
+            } else {
+                amount = parseFloat(document.getElementById('currencyAmount').value) || 0;
+                salePrice = parseFloat(document.getElementById('salePrice').value) || 0;
+            }
+
+            const { db, ref, push, update } = window.dbRef;
 
             if (firebaseKey) {
                 update(ref(db, `records/${firebaseKey}`), { amount, salePrice, date });
