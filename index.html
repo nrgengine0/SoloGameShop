@@ -97,6 +97,9 @@
 
             <!-- Home Dashboard / Grid -->
             <div id="HomeSection" class="space-y-6">
+                <!-- Total Accumulative Card Area (All Games combined) -->
+                <div id="accumulativeTotalArea" class="mb-6"></div>
+
                 <div id="HomeGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6"></div>
             </div>
 
@@ -356,11 +359,46 @@
 
         function calculateTotalsAndRenderCards() {
             const grid = document.getElementById('HomeGrid'); grid.innerHTML = '';
+            const accumulativeArea = document.getElementById('accumulativeTotalArea'); accumulativeArea.innerHTML = '';
             
+            // Calculate traditional game totals
             const pubgTotal = records.filter(r => r.game === 'PUBG').reduce((sum, r) => sum + (parseFloat(r.salePrice) || 0), 0);
             const mlbbTotal = records.filter(r => r.game === 'MLBB').reduce((sum, r) => sum + (parseFloat(r.salePrice) || 0), 0);
+            
+            // Calculate total expenses (အထွက် Note စုစုပေါင်း)
             const expenseTotal = records.filter(r => r.game === 'ExpenseNote').reduce((sum, r) => sum + (parseFloat(r.salePrice) || 0), 0);
 
+            // Calculate other custom games total dynamically
+            let customGamesTotal = 0;
+            let customGamesHTML = '';
+            customGames.forEach(game => {
+                const total = records.filter(r => r.game === game.id).reduce((sum, r) => sum + (parseFloat(r.salePrice) || 0), 0);
+                customGamesTotal += total;
+                customGamesHTML += `
+                    <div class="glass-panel p-5 lg:p-6 rounded-2xl relative overflow-hidden border-l-4 border-l-purple-500">
+                        <div class="absolute right-4 top-4 text-purple-500/10 text-6xl font-bold">💵</div>
+                        <h4 class="text-gray-400 text-xs font-bold mb-2">${game.name}</h4>
+                        <p class="text-2xl font-extrabold text-purple-400">${total.toLocaleString()} Ks</p>
+                    </div>`;
+            });
+
+            // calculate Grand Total of all traditional + custom games (excluding Expense Note)
+            const grandTotal = pubgTotal + mlbbTotal + customGamesTotal;
+
+            // Render the Big Accumulative Total Banner
+            accumulativeArea.innerHTML = `
+                <div class="bg-gradient-to-r from-indigo-900/80 to-purple-900/80 p-6 rounded-2xl border border-indigo-500/30 relative overflow-hidden shadow-2xl">
+                    <div class="absolute right-6 top-6 text-white/5 text-8xl font-black"><i class="fa-solid fa-wallet"></i></div>
+                    <div class="relative z-10">
+                        <h3 class="text-indigo-300 text-xs lg:text-sm font-bold uppercase tracking-widest mb-1">စုစုပေါင်းအရောင်းပမာဏ</h3>
+                        <span class="text-xs text-gray-400 block mb-3">All Game Sales Total (PUBG + ML + Others)</span>
+                        <p class="text-3xl lg:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-indigo-200 to-indigo-400">
+                            ${grandTotal.toLocaleString()} Ks
+                        </p>
+                    </div>
+                </div>`;
+
+            // Render individual cards
             grid.innerHTML += `
                 <div class="glass-panel p-5 lg:p-6 rounded-2xl relative overflow-hidden border-l-4 border-l-orange-500">
                     <div class="absolute right-4 top-4 text-orange-500/10 text-6xl font-bold">🎮</div>
@@ -372,21 +410,14 @@
                     <h4 class="text-gray-400 text-xs font-bold mb-2">MOBILE LEGENDS</h4>
                     <p class="text-2xl font-extrabold text-blue-400">${mlbbTotal.toLocaleString()} Ks</p>
                 </div>
+                <!-- Custom Game cards output -->
+                ${customGamesHTML}
+                <!-- Expense Note Dashboard Card -->
                 <div class="glass-panel p-5 lg:p-6 rounded-2xl relative overflow-hidden border-l-4 border-l-red-500">
                     <div class="absolute right-4 top-4 text-red-500/10 text-6xl font-bold">📝</div>
                     <h4 class="text-gray-400 text-xs font-bold mb-2">အထွက် စုစုပေါင်း (EXPENSES)</h4>
                     <p class="text-2xl font-extrabold text-red-400">${expenseTotal.toLocaleString()} Ks</p>
                 </div>`;
-
-            customGames.forEach(game => {
-                const total = records.filter(r => r.game === game.id).reduce((sum, r) => sum + (parseFloat(r.salePrice) || 0), 0);
-                grid.innerHTML += `
-                    <div class="glass-panel p-5 lg:p-6 rounded-2xl relative overflow-hidden border-l-4 border-l-purple-500">
-                        <div class="absolute right-4 top-4 text-purple-500/10 text-6xl font-bold">💵</div>
-                        <h4 class="text-gray-400 text-xs font-bold mb-2">${game.name}</h4>
-                        <p class="text-2xl font-extrabold text-purple-400">${total.toLocaleString()} Ks</p>
-                    </div>`;
-            });
         }
 
         function renderTable(searchTerm = '') {
@@ -400,7 +431,7 @@
             ));
 
             if(filtered.length === 0) {
-                table.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-500">မှတ်တမ်း မရှိသေးပါ</td></tr>`;
+                table.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-500">... မှတ်တမ်း မရှိသေးပါ ...</td></tr>`;
                 return;
             }
 
@@ -521,8 +552,8 @@
             closeModal();
         }
 
+        // Action handles
         function editRecord(key) { openModal(key); }
-        
         function deleteRecord(key) {
             if(confirm('ဖျက်မှာ သေချာပြီလား?')) {
                 const { db, ref, remove } = window.dbRef;
@@ -530,6 +561,7 @@
             }
         }
 
+        // Search Synchronization
         function searchTable() {
             const term = document.getElementById('searchInput').value.toLowerCase();
             document.getElementById('mobileSearchInput').value = term; renderTable(term);
@@ -539,7 +571,7 @@
             document.getElementById('searchInput').value = term; renderTable(term);
         }
 
-        // ဝင်ဝင်ချင်းမှာ Home View ကို အလိုအလျောက် ဖွင့်ပေးရန်
+        // Initial view boot
         switchView('Home');
     </script>
 </body>
