@@ -28,7 +28,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Global references for internal functions (CRITICAL FIX)
+        // Global references for internal functions
         window.dbRef = { ref, set, onValue, push, remove, update, db };
     </script>
 
@@ -66,7 +66,7 @@
                 <!-- Custom Games Menu Container -->
                 <div id="customGamesMenu"></div>
 
-                <!-- Game Items ဝယ်ရန် Menu -->
+                <!-- Game Items ဝယ်ရန် Menu (တိုက်ရိုက် Browser ဖြင့် လုံခြုံစွာဖွင့်ရန် ပြင်ဆင်ပြီး) -->
                 <li class="pt-4 pb-1"><span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">🛒 Game Items ဝယ်ရန်</span></li>
                 <li>
                     <a href="https://www.smile.one/br/" target="_blank" onclick="if(window.innerWidth < 1024) toggleSidebar();" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700">
@@ -167,7 +167,7 @@
         </div>
     </main>
 
-    <!-- Modal Form -->
+    <!-- Modal Form (Dual layout based on selection type) -->
     <div id="recordModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden justify-center items-center z-50 p-4">
         <div class="bg-gray-800 rounded-xl p-5 lg:p-6 w-full max-w-sm border border-gray-700 shadow-2xl transform transition-all scale-95 opacity-0" id="modalContent">
             <h3 class="text-lg font-bold mb-4" id="modalTitle">မှတ်တမ်း အသစ်ထည့်ရန်</h3>
@@ -189,11 +189,11 @@
                 <div id="expenseInputsContainer" class="hidden">
                     <div class="mb-4">
                         <label class="block text-xs lg:text-sm text-gray-400 mb-1">အကြောင်းအရာ (Note / Item)</label>
-                        <input type="text" id="expenseItem" placeholder="" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 text-white outline-none">
+                        <input type="text" id="expenseItem" placeholder="ဥပမာ - coin 1000" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 text-white outline-none">
                     </div>
                     <div>
                         <label class="block text-xs lg:text-sm text-gray-400 mb-1">ဝယ်ဈေး / အထွက်ငွေ (Cost)</label>
-                        <input type="number" id="expenseCost" placeholder="" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 text-white outline-none">
+                        <input type="number" id="expenseCost" placeholder="ဥပမာ - 83500" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 text-white outline-none">
                     </div>
                 </div>
 
@@ -209,15 +209,13 @@
         </div>
     </div>
 
-    <!-- Ordinary Script (Contains Non-Module UI Logic & Globally Bound Handlers) -->
     <script>
         let currentView = 'Home'; 
         let records = [];
         let customGames = [];
 
-        // Check and fetch Firebase from Global Reference regularly
         window.addEventListener('load', () => {
-            setTimeout(initFirebaseRealtime, 1000); 
+            setTimeout(initFirebaseRealtime, 1500); 
         });
 
         function initFirebaseRealtime() {
@@ -270,7 +268,6 @@
                 return alert('ဂိမ်းအမည် ရှိပြီးသားဖြစ်နေသည်။');
             }
 
-            if(!window.dbRef) return alert('Firebase ချိတ်ဆက်နေဆဲဖြစ်ပါသည်။ စက္ကန့်အနည်းငယ် စောင့်ပါ။');
             const { db, ref, push } = window.dbRef;
             push(ref(db, 'customGames'), { id: name, name: name, currency: currency });
 
@@ -279,8 +276,7 @@
         }
 
         function deleteCustomGame(firebaseKey, gameId) {
-            if(confirm(`ဒီဂိမ်းနှင့် သက်ဆိုင်သော မှတ်တမ်းအားလုံးပါ အွန်လိုင်းမှ ဖျက်မှာ သေချာပါသလား?`)) {
-                if(!window.dbRef) return;
+            if(confirm(`ဒီဂိမ်းနှင့် သက်ဆိုင်သော မှတ်တမ်းအားလုံးပါ အွန်လိုင်းမှ ဖျက်မှာ သေသာပါသလား?`)) {
                 const { db, ref, remove } = window.dbRef;
                 remove(ref(db, `customGames/${firebaseKey}`));
                 records.forEach(r => {
@@ -517,7 +513,7 @@
             // MLBB အတွက် Number အစား Text ရိုက်ထည့်နိုင်အောင် ပြောင်းလဲပေးခြင်း
             if (currentView === 'MLBB') {
                 amountInput.type = "text";
-                amountInput.placeholder = "";
+                amountInput.placeholder = "ဥပမာ - 100+10 / 100dm";
             } else {
                 amountInput.type = "number";
                 amountInput.placeholder = "";
@@ -583,7 +579,6 @@
                 salePrice = parseFloat(document.getElementById('salePrice').value) || 0;
             }
 
-            if(!window.dbRef) return alert('Database သို့ ချိတ်ဆက်၍မရသေးပါ။ ခဏစောင့်ပေးပါ။');
             const { db, ref, push, update } = window.dbRef;
 
             if (firebaseKey) {
@@ -596,23 +591,31 @@
 
         // Action handles
         function editRecord(key) { openModal(key); }
-        
         function deleteRecord(key) {
             if(confirm('ဖျက်မှာ သေချာပြီလား?')) {
-                if(!window.dbRef) return alert('Database သို့ မချိတ်ဆက်နိုင်သေးပါ။');
                 const { db, ref, remove } = window.dbRef;
-                
                 remove(ref(db, `records/${key}`))
                     .then(() => {
-                        console.log("Deleted from Firebase!");
+                        console.log("Record successfully deleted!");
                     })
                     .catch((error) => {
-                        alert("ဖျက်ရာတွင် အဆင်မပြေပါ: " + error.message);
+                        console.error("Error deleting record: ", error);
+                        alert("ဖျက်ရာတွင် အမှားအယွင်းရှိပါသည်: " + error.message);
                     });
             }
         }
 
-        // Bind vital functions to global window object so inline event listeners can access them inside strict sandbox
+        // Search Synchronization
+        function searchTable() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            document.getElementById('mobileSearchInput').value = term; renderTable(term);
+        }
+        function searchTableMobile() {
+            const term = document.getElementById('mobileSearchInput').value.toLowerCase();
+            document.getElementById('searchInput').value = term; renderTable(term);
+        }
+
+        // Exposing vital UI functions to global window scope to avoid sandbox reference errors
         window.toggleSidebar = toggleSidebar;
         window.addCustomGame = addCustomGame;
         window.deleteCustomGame = deleteCustomGame;
@@ -632,3 +635,4 @@
     </script>
 </body>
 </html>
+
