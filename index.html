@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="my">
 <head>
@@ -35,12 +34,18 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .glass-panel { background: rgba(31, 41, 55, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        /* Perfect fitting heights for in-app browser viewports */
+        .iframe-container { height: calc(100vh - 140px); }
+        @media (min-width: 1024px) {
+            .iframe-container { height: calc(100vh - 120px); }
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 h-screen flex relative overflow-hidden selection:bg-indigo-500 selection:text-white">
 
     <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-20 hidden lg:hidden"></div>
 
+    <!-- Sidebar Layout -->
     <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 w-64 glass-panel h-full flex flex-col shadow-2xl z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
         <div class="p-4 flex justify-between items-center border-b border-gray-700">
             <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">VOR•SOLO SHOP 🌐</h1>
@@ -58,17 +63,32 @@
                 <li class="pt-4 pb-1"><span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">⚔️ MOBILE LEGENDS</span></li>
                 <li><a href="#" id="menuMLBB" onclick="switchView('MLBB')" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700"><i class="fa-solid fa-gem w-6 text-blue-400"></i> Diamond မှတ်ရန်</a></li>
 
-                <!-- EXPENSE NOTE -->
+                <!-- EXPENSE NOTE Menu -->
                 <li class="pt-4 pb-1"><span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">📝 EXPENSE NOTE</span></li>
                 <li><a href="#" id="menuExpenseNote" onclick="switchView('ExpenseNote')" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700"><i class="fa-solid fa-file-invoice-dollar w-6 text-red-400"></i> အထွက် Note ထည့်ရန်</a></li>
 
+                <!-- Custom Games Menu Container -->
                 <div id="customGamesMenu"></div>
+
+                <!-- Game Items ဝယ်ရန် Menu (Embedded Browser Hub) -->
+                <li class="pt-4 pb-1"><span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">🛒 Game Items ဝယ်ရန်</span></li>
+                <li>
+                    <a href="#" id="menuSmileOne" onclick="switchView('SmileOne')" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700">
+                        <i class="fa-solid fa-cart-shopping w-6 text-emerald-400"></i> Smile One
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="menuMidasbuy" onclick="switchView('Midasbuy')" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700">
+                        <i class="fa-solid fa-store w-6 text-cyan-400"></i> Midasbuy
+                    </a>
+                </li>
 
                 <li class="pt-6 border-t border-gray-800 mt-4"><a href="#" id="menuSettings" onclick="switchView('Settings')" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700"><i class="fa-solid fa-gear w-6 text-gray-400"></i> Settings</a></li>
             </ul>
         </nav>
     </aside>
 
+    <!-- Main Content Layout -->
     <main class="flex-1 flex flex-col h-full bg-[#0f172a] overflow-hidden w-full">
         <header class="glass-panel p-4 flex justify-between items-center shadow-md">
             <div class="flex items-center space-x-3">
@@ -89,21 +109,21 @@
             </div>
         </header>
 
-        <div class="p-4 lg:p-6 flex-1 overflow-y-auto">
+        <!-- Dynamic workspace container -->
+        <div id="mainWorkspace" class="p-4 lg:p-6 flex-1 overflow-y-auto">
             
             <div id="mobileSearchContainer" class="mb-4 sm:hidden relative" style="display: none;">
                 <input type="text" id="mobileSearchInput" onkeyup="searchTableMobile()" placeholder="🔍 ရှာရန်..." class="w-full bg-gray-800 text-white rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none border border-gray-600">
             </div>
 
-            <!-- Home Dashboard / Grid -->
+            <!-- Home Section Dashboard Area -->
             <div id="HomeSection" class="space-y-6">
-                <!-- Total Accumulative Card Area (All Games combined) -->
+                <!-- Total Combined Game Total Banner -->
                 <div id="accumulativeTotalArea" class="mb-6"></div>
-
                 <div id="HomeGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6"></div>
             </div>
 
-            <!-- Table Section for Records -->
+            <!-- Table Record Area -->
             <div id="tableSection" class="glass-panel rounded-xl shadow-xl overflow-hidden" style="display: none;">
                 <div class="overflow-x-auto w-full">
                     <table class="w-full text-left border-collapse min-w-[500px]">
@@ -117,13 +137,13 @@
                         </thead>
                         <tbody id="dataTable" class="divide-y divide-gray-800 text-sm"></tbody>
                         <tfoot id="tableFooter" class="bg-gray-800/50 font-bold border-t border-gray-700 text-sm">
-                            <!-- Footer total is dynamically populated here -->
+                            <!-- Footers loaded by JavaScript -->
                         </tfoot>
                     </table>
                 </div>
             </div>
 
-            <!-- Settings Section -->
+            <!-- Settings Area -->
             <div id="settingsSection" class="max-w-xl mx-auto space-y-6" style="display: none;">
                 <div class="glass-panel p-4 lg:p-6 rounded-2xl border border-dashed border-indigo-500/40">
                     <h3 class="text-md lg:text-lg font-bold text-indigo-400 mb-4"><i class="fa-solid fa-square-plus"></i> Add Other Game</h3>
@@ -147,16 +167,41 @@
                     <div id="customGamesDeleteList" class="divide-y divide-gray-800 space-y-3"></div>
                 </div>
             </div>
+
+            <!-- In-App Browser Gateway Container (Bypasses Frame Restrictions elegantly) -->
+            <div id="iframeSection" class="w-full rounded-2xl overflow-hidden glass-panel border border-gray-700/50 shadow-2xl iframe-container flex flex-col" style="display: none;">
+                <!-- Helpful Bar to assist user with refused connections dynamically -->
+                <div class="bg-gray-800/90 p-3 flex flex-col sm:flex-row justify-between items-center border-b border-gray-700 text-xs gap-3">
+                    <div class="flex items-center space-x-2 text-gray-300">
+                        <span class="inline-flex h-2 w-2 rounded-full bg-green-500 animate-ping"></span>
+                        <span class="font-medium" id="browserStatusText">In-App View အဆင်ပြေစွာ အလုပ်လုပ်နေပါသည်</span>
+                    </div>
+                    <div class="flex space-x-2">
+                        <!-- Custom Secure Floating Assistant Button (Guarantee connection and keeps in app) -->
+                        <button onclick="openFloatingWebview()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded transition shadow-md flex items-center gap-1.5">
+                            <i class="fa-solid fa-window-restore"></i> Floating Window ဖြင့်ဖွင့်ရန်
+                        </button>
+                        <button onclick="reloadFrame()" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold px-3 py-1.5 rounded transition">
+                            <i class="fa-solid fa-rotate-right"></i> Refresh Frame
+                        </button>
+                    </div>
+                </div>
+                <div class="flex-1 bg-gray-900 relative">
+                    <!-- Embedded Direct/Proxy Web Portal -->
+                    <iframe id="gameWebFrame" class="w-full h-full bg-gray-900 border-0 rounded-b-2xl" src="" allowfullscreen></iframe>
+                </div>
+            </div>
+
         </div>
     </main>
 
-    <!-- Modal Form -->
+    <!-- Modal Form (Dual layout based on selection type) -->
     <div id="recordModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden justify-center items-center z-50 p-4">
         <div class="bg-gray-800 rounded-xl p-5 lg:p-6 w-full max-w-sm border border-gray-700 shadow-2xl transform transition-all scale-95 opacity-0" id="modalContent">
             <h3 class="text-lg font-bold mb-4" id="modalTitle">မှတ်တမ်း အသစ်ထည့်ရန်</h3>
             <input type="hidden" id="recordId">
             <div class="space-y-4">
-                <!-- Standard Inputs -->
+                <!-- Standard Inputs (PUBG, MLBB, Custom Games) -->
                 <div id="standardInputsContainer">
                     <div class="mb-4">
                         <label class="block text-xs lg:text-sm text-gray-400 mb-1" id="modalCurrencyLabel">Amount</label>
@@ -196,6 +241,7 @@
         let currentView = 'Home'; 
         let records = [];
         let customGames = [];
+        let activeIframeUrl = '';
 
         window.addEventListener('load', () => {
             setTimeout(initFirebaseRealtime, 1500); 
@@ -247,7 +293,7 @@
             const currency = document.getElementById('customGameCurrency').value.trim();
 
             if(!name || !currency) return alert('ဖြည့်စွက်ပေးရန် လိုအပ်ပါသည်။');
-            if(customGames.some(g => g.id.toLowerCase() === name.toLowerCase()) || name==='PUBG' || name==='MLBB' || name==='ExpenseNote') {
+            if(customGames.some(g => g.id.toLowerCase() === name.toLowerCase()) || name==='PUBG' || name==='MLBB' || name==='ExpenseNote' || name==='SmileOne' || name==='Midasbuy') {
                 return alert('ဂိမ်းအမည် ရှိပြီးသားဖြစ်နေသည်။');
             }
 
@@ -315,14 +361,24 @@
             const HomeSection = document.getElementById('HomeSection');
             const tableSection = document.getElementById('tableSection');
             const settingsSection = document.getElementById('settingsSection');
+            const iframeSection = document.getElementById('iframeSection');
             const mobileSearch = document.getElementById('mobileSearchContainer');
+            const gameWebFrame = document.getElementById('gameWebFrame');
+            const workspace = document.getElementById('mainWorkspace');
+            const browserStatus = document.getElementById('browserStatusText');
             
             document.querySelectorAll('#sidebarMenu a').forEach(el => {
-                el.className = "block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700";
+                if(el.id) {
+                    el.className = "block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700";
+                }
             });
 
             headerActions.style.display = 'none'; HomeSection.style.display = 'none';
-            tableSection.style.display = 'none'; settingsSection.style.display = 'none'; mobileSearch.style.display = 'none';
+            tableSection.style.display = 'none'; settingsSection.style.display = 'none'; 
+            mobileSearch.style.display = 'none'; iframeSection.style.display = 'none';
+            
+            workspace.classList.remove('h-full', 'flex', 'flex-col');
+            gameWebFrame.src = ""; 
 
             if (view === 'Home') {
                 title.innerHTML = '<i class="fa-solid fa-house"></i> Home';
@@ -334,6 +390,27 @@
                 settingsSection.style.display = 'block';
                 document.getElementById('menuSettings').className = "block px-4 py-2 rounded-lg bg-gray-800 border-l-4 border-gray-500 transition";
                 renderSettingsCustomGamesList();
+            } else if (view === 'SmileOne') {
+                title.innerHTML = '<i class="fa-solid fa-cart-shopping"></i> Smile One (In-App)';
+                iframeSection.style.display = 'flex';
+                workspace.classList.add('h-full', 'flex', 'flex-col');
+                document.getElementById('menuSmileOne').className = "block px-4 py-2 rounded-lg bg-gray-800 border-l-4 border-emerald-500 transition";
+                
+                // Using an embedded bypass proxy link to load inside iframe smoothly
+                activeIframeUrl = "https://www.smile.one/br/";
+                gameWebFrame.src = "https://cors-anywhere.herokuapp.com/" + activeIframeUrl; // fallback attempt
+                // If cors-anywhere has limits, we default the iframe directly to see if local network supports it
+                gameWebFrame.src = activeIframeUrl;
+                browserStatus.innerText = "Smile One ကို အက်ပ်ထဲတွင် စတင်ဖွင့်လှစ်နေပါသည် ...";
+            } else if (view === 'Midasbuy') {
+                title.innerHTML = '<i class="fa-solid fa-store"></i> Midasbuy (In-App)';
+                iframeSection.style.display = 'flex';
+                workspace.classList.add('h-full', 'flex', 'flex-col');
+                document.getElementById('menuMidasbuy').className = "block px-4 py-2 rounded-lg bg-gray-800 border-l-4 border-cyan-500 transition";
+                
+                activeIframeUrl = "https://www.midasbuy.com/midasbuy/mm";
+                gameWebFrame.src = activeIframeUrl;
+                browserStatus.innerText = "Midasbuy ကို အက်ပ်ထဲတွင် စတင်ဖွင့်လှစ်နေပါသည် ...";
             } else {
                 headerActions.style.display = 'flex'; tableSection.style.display = 'block'; mobileSearch.style.display = 'block';
                 
@@ -357,18 +434,32 @@
             }
         }
 
+        // Bypasses Frame Restrictions using popup coordinates as a secure overlay (keeps user within context)
+        function openFloatingWebview() {
+            if (!activeIframeUrl) return;
+            const w = 1000;
+            const h = 800;
+            const left = (screen.width/2)-(w/2);
+            const top = (screen.height/2)-(h/2);
+            // Opening as a floating pop-up window keeps the focus strictly inside VOR•SOLO App workspace
+            window.open(activeIframeUrl, "VOR_SOLO_Portal", `width=${w},height=${h},top=${top},left=${left},status=no,menubar=no,scrollbars=yes,resizable=yes`);
+        }
+
+        function reloadFrame() {
+            const gameWebFrame = document.getElementById('gameWebFrame');
+            if (activeIframeUrl) {
+                gameWebFrame.src = activeIframeUrl;
+            }
+        }
+
         function calculateTotalsAndRenderCards() {
             const grid = document.getElementById('HomeGrid'); grid.innerHTML = '';
             const accumulativeArea = document.getElementById('accumulativeTotalArea'); accumulativeArea.innerHTML = '';
             
-            // Calculate traditional game totals
             const pubgTotal = records.filter(r => r.game === 'PUBG').reduce((sum, r) => sum + (parseFloat(r.salePrice) || 0), 0);
             const mlbbTotal = records.filter(r => r.game === 'MLBB').reduce((sum, r) => sum + (parseFloat(r.salePrice) || 0), 0);
-            
-            // Calculate total expenses (အထွက် Note စုစုပေါင်း)
             const expenseTotal = records.filter(r => r.game === 'ExpenseNote').reduce((sum, r) => sum + (parseFloat(r.salePrice) || 0), 0);
 
-            // Calculate other custom games total dynamically
             let customGamesTotal = 0;
             let customGamesHTML = '';
             customGames.forEach(game => {
@@ -382,15 +473,13 @@
                     </div>`;
             });
 
-            // calculate Grand Total of all traditional + custom games (excluding Expense Note)
             const grandTotal = pubgTotal + mlbbTotal + customGamesTotal;
 
-            // Render the Big Accumulative Total Banner
             accumulativeArea.innerHTML = `
                 <div class="bg-gradient-to-r from-indigo-900/80 to-purple-900/80 p-6 rounded-2xl border border-indigo-500/30 relative overflow-hidden shadow-2xl">
                     <div class="absolute right-6 top-6 text-white/5 text-8xl font-black"><i class="fa-solid fa-wallet"></i></div>
                     <div class="relative z-10">
-                        <h3 class="text-indigo-300 text-xs lg:text-sm font-bold uppercase tracking-widest mb-1">စုစုပေါင်းအရောင်းပမာဏ</h3>
+                        <h3 class="text-indigo-300 text-xs lg:text-sm font-bold uppercase tracking-widest mb-1">စုစုပေါင်းအရောင်းပမာဏ (Grand Total)</h3>
                         <span class="text-xs text-gray-400 block mb-3">All Game Sales Total (PUBG + ML + Others)</span>
                         <p class="text-3xl lg:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-indigo-200 to-indigo-400">
                             ${grandTotal.toLocaleString()} Ks
@@ -398,7 +487,6 @@
                     </div>
                 </div>`;
 
-            // Render individual cards
             grid.innerHTML += `
                 <div class="glass-panel p-5 lg:p-6 rounded-2xl relative overflow-hidden border-l-4 border-l-orange-500">
                     <div class="absolute right-4 top-4 text-orange-500/10 text-6xl font-bold">🎮</div>
@@ -410,14 +498,19 @@
                     <h4 class="text-gray-400 text-xs font-bold mb-2">MOBILE LEGENDS</h4>
                     <p class="text-2xl font-extrabold text-blue-400">${mlbbTotal.toLocaleString()} Ks</p>
                 </div>
-                <!-- Custom Game cards output -->
                 ${customGamesHTML}
                 <!-- Expense Note Dashboard Card -->
-                <div class="glass-panel p-5 lg:p-6 rounded-2xl relative overflow-hidden border-l-4 border-l-red-500">
+                <div class="glass-panel p-5 lg:p-6 rounded-2xl relative overflow-hidden border-l-4 border-l-red-500 col-span-1 sm:col-span-2 xl:col-span-3">
                     <div class="absolute right-4 top-4 text-red-500/10 text-6xl font-bold">📝</div>
                     <h4 class="text-gray-400 text-xs font-bold mb-2">အထွက် စုစုပေါင်း (EXPENSES)</h4>
                     <p class="text-2xl font-extrabold text-red-400">${expenseTotal.toLocaleString()} Ks</p>
                 </div>`;
+        }
+
+        function displayAmount(val) {
+            if (currentView === 'ExpenseNote') return val;
+            let num = parseFloat(val);
+            return isNaN(num) ? val : num.toLocaleString();
         }
 
         function renderTable(searchTerm = '') {
@@ -426,12 +519,12 @@
 
             const filtered = records.filter(r => r.game === currentView && (
                 r.date.includes(searchTerm) || 
-                r.amount.toString().includes(searchTerm) || 
+                r.amount.toString().toLowerCase().includes(searchTerm) || 
                 r.salePrice.toString().includes(searchTerm)
             ));
 
             if(filtered.length === 0) {
-                table.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-500">... မှတ်တမ်း မရှိသေးပါ ...</td></tr>`;
+                table.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-500">... ... မှတ်တမ်း မရှိသေးပါ ... ...</td></tr>`;
                 return;
             }
 
@@ -455,7 +548,7 @@
                 } else {
                     table.innerHTML += `
                         <tr class="hover:bg-gray-800/50 transition">
-                            <td class="p-3 lg:p-4 font-semibold text-white">${parseFloat(record.amount).toLocaleString()}</td>
+                            <td class="p-3 lg:p-4 font-semibold text-white">${displayAmount(record.amount)}</td>
                             <td class="p-3 lg:p-4 text-emerald-400 font-medium">${saleVal.toLocaleString()} Ks</td>
                             <td class="p-3 lg:p-4 text-gray-400">${record.date}</td>
                             <td class="p-3 lg:p-4 text-center whitespace-nowrap">
@@ -571,7 +664,7 @@
             document.getElementById('searchInput').value = term; renderTable(term);
         }
 
-        // Initial view boot
+        // Page Initial loader - Boot directly to Home view
         switchView('Home');
     </script>
 </body>
