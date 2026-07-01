@@ -34,11 +34,6 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .glass-panel { background: rgba(31, 41, 55, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        /* Perfect fitting heights for in-app browser viewports */
-        .iframe-container { height: calc(100vh - 140px); }
-        @media (min-width: 1024px) {
-            .iframe-container { height: calc(100vh - 120px); }
-        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 h-screen flex relative overflow-hidden selection:bg-indigo-500 selection:text-white">
@@ -70,15 +65,15 @@
                 <!-- Custom Games Menu Container -->
                 <div id="customGamesMenu"></div>
 
-                <!-- Game Items ဝယ်ရန် Menu (Embedded Browser Hub) -->
+                <!-- Game Items ဝယ်ရန် Menu (Open safely in external tab to prevent "Refused to connect" error) -->
                 <li class="pt-4 pb-1"><span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">🛒 Game Items ဝယ်ရန်</span></li>
                 <li>
-                    <a href="#" id="menuSmileOne" onclick="switchView('SmileOne')" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700">
+                    <a href="https://www.smile.one/br/" target="_blank" onclick="if(window.innerWidth < 1024) toggleSidebar();" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700">
                         <i class="fa-solid fa-cart-shopping w-6 text-emerald-400"></i> Smile One
                     </a>
                 </li>
                 <li>
-                    <a href="#" id="menuMidasbuy" onclick="switchView('Midasbuy')" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700">
+                    <a href="https://www.midasbuy.com/midasbuy/mm" target="_blank" onclick="if(window.innerWidth < 1024) toggleSidebar();" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700">
                         <i class="fa-solid fa-store w-6 text-cyan-400"></i> Midasbuy
                     </a>
                 </li>
@@ -168,30 +163,6 @@
                 </div>
             </div>
 
-            <!-- In-App Browser Gateway Container (Bypasses Frame Restrictions elegantly) -->
-            <div id="iframeSection" class="w-full rounded-2xl overflow-hidden glass-panel border border-gray-700/50 shadow-2xl iframe-container flex flex-col" style="display: none;">
-                <!-- Helpful Bar to assist user with refused connections dynamically -->
-                <div class="bg-gray-800/90 p-3 flex flex-col sm:flex-row justify-between items-center border-b border-gray-700 text-xs gap-3">
-                    <div class="flex items-center space-x-2 text-gray-300">
-                        <span class="inline-flex h-2 w-2 rounded-full bg-green-500 animate-ping"></span>
-                        <span class="font-medium" id="browserStatusText">In-App View အဆင်ပြေစွာ အလုပ်လုပ်နေပါသည်</span>
-                    </div>
-                    <div class="flex space-x-2">
-                        <!-- Custom Secure Floating Assistant Button (Guarantee connection and keeps in app) -->
-                        <button onclick="openFloatingWebview()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded transition shadow-md flex items-center gap-1.5">
-                            <i class="fa-solid fa-window-restore"></i> Floating Window ဖြင့်ဖွင့်ရန်
-                        </button>
-                        <button onclick="reloadFrame()" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold px-3 py-1.5 rounded transition">
-                            <i class="fa-solid fa-rotate-right"></i> Refresh Frame
-                        </button>
-                    </div>
-                </div>
-                <div class="flex-1 bg-gray-900 relative">
-                    <!-- Embedded Direct/Proxy Web Portal -->
-                    <iframe id="gameWebFrame" class="w-full h-full bg-gray-900 border-0 rounded-b-2xl" src="" allowfullscreen></iframe>
-                </div>
-            </div>
-
         </div>
     </main>
 
@@ -241,7 +212,6 @@
         let currentView = 'Home'; 
         let records = [];
         let customGames = [];
-        let activeIframeUrl = '';
 
         window.addEventListener('load', () => {
             setTimeout(initFirebaseRealtime, 1500); 
@@ -293,7 +263,7 @@
             const currency = document.getElementById('customGameCurrency').value.trim();
 
             if(!name || !currency) return alert('ဖြည့်စွက်ပေးရန် လိုအပ်ပါသည်။');
-            if(customGames.some(g => g.id.toLowerCase() === name.toLowerCase()) || name==='PUBG' || name==='MLBB' || name==='ExpenseNote' || name==='SmileOne' || name==='Midasbuy') {
+            if(customGames.some(g => g.id.toLowerCase() === name.toLowerCase()) || name==='PUBG' || name==='MLBB' || name==='ExpenseNote') {
                 return alert('ဂိမ်းအမည် ရှိပြီးသားဖြစ်နေသည်။');
             }
 
@@ -361,11 +331,7 @@
             const HomeSection = document.getElementById('HomeSection');
             const tableSection = document.getElementById('tableSection');
             const settingsSection = document.getElementById('settingsSection');
-            const iframeSection = document.getElementById('iframeSection');
             const mobileSearch = document.getElementById('mobileSearchContainer');
-            const gameWebFrame = document.getElementById('gameWebFrame');
-            const workspace = document.getElementById('mainWorkspace');
-            const browserStatus = document.getElementById('browserStatusText');
             
             document.querySelectorAll('#sidebarMenu a').forEach(el => {
                 if(el.id) {
@@ -375,10 +341,7 @@
 
             headerActions.style.display = 'none'; HomeSection.style.display = 'none';
             tableSection.style.display = 'none'; settingsSection.style.display = 'none'; 
-            mobileSearch.style.display = 'none'; iframeSection.style.display = 'none';
-            
-            workspace.classList.remove('h-full', 'flex', 'flex-col');
-            gameWebFrame.src = ""; 
+            mobileSearch.style.display = 'none';
 
             if (view === 'Home') {
                 title.innerHTML = '<i class="fa-solid fa-house"></i> Home';
@@ -390,27 +353,6 @@
                 settingsSection.style.display = 'block';
                 document.getElementById('menuSettings').className = "block px-4 py-2 rounded-lg bg-gray-800 border-l-4 border-gray-500 transition";
                 renderSettingsCustomGamesList();
-            } else if (view === 'SmileOne') {
-                title.innerHTML = '<i class="fa-solid fa-cart-shopping"></i> Smile One (In-App)';
-                iframeSection.style.display = 'flex';
-                workspace.classList.add('h-full', 'flex', 'flex-col');
-                document.getElementById('menuSmileOne').className = "block px-4 py-2 rounded-lg bg-gray-800 border-l-4 border-emerald-500 transition";
-                
-                // Using an embedded bypass proxy link to load inside iframe smoothly
-                activeIframeUrl = "https://www.smile.one/br/";
-                gameWebFrame.src = "https://cors-anywhere.herokuapp.com/" + activeIframeUrl; // fallback attempt
-                // If cors-anywhere has limits, we default the iframe directly to see if local network supports it
-                gameWebFrame.src = activeIframeUrl;
-                browserStatus.innerText = "Smile One ကို အက်ပ်ထဲတွင် စတင်ဖွင့်လှစ်နေပါသည် ...";
-            } else if (view === 'Midasbuy') {
-                title.innerHTML = '<i class="fa-solid fa-store"></i> Midasbuy (In-App)';
-                iframeSection.style.display = 'flex';
-                workspace.classList.add('h-full', 'flex', 'flex-col');
-                document.getElementById('menuMidasbuy').className = "block px-4 py-2 rounded-lg bg-gray-800 border-l-4 border-cyan-500 transition";
-                
-                activeIframeUrl = "https://www.midasbuy.com/midasbuy/mm";
-                gameWebFrame.src = activeIframeUrl;
-                browserStatus.innerText = "Midasbuy ကို အက်ပ်ထဲတွင် စတင်ဖွင့်လှစ်နေပါသည် ...";
             } else {
                 headerActions.style.display = 'flex'; tableSection.style.display = 'block'; mobileSearch.style.display = 'block';
                 
@@ -434,30 +376,14 @@
             }
         }
 
-        // Bypasses Frame Restrictions using popup coordinates as a secure overlay (keeps user within context)
-        function openFloatingWebview() {
-            if (!activeIframeUrl) return;
-            const w = 1000;
-            const h = 800;
-            const left = (screen.width/2)-(w/2);
-            const top = (screen.height/2)-(h/2);
-            // Opening as a floating pop-up window keeps the focus strictly inside VOR•SOLO App workspace
-            window.open(activeIframeUrl, "VOR_SOLO_Portal", `width=${w},height=${h},top=${top},left=${left},status=no,menubar=no,scrollbars=yes,resizable=yes`);
-        }
-
-        function reloadFrame() {
-            const gameWebFrame = document.getElementById('gameWebFrame');
-            if (activeIframeUrl) {
-                gameWebFrame.src = activeIframeUrl;
-            }
-        }
-
         function calculateTotalsAndRenderCards() {
             const grid = document.getElementById('HomeGrid'); grid.innerHTML = '';
             const accumulativeArea = document.getElementById('accumulativeTotalArea'); accumulativeArea.innerHTML = '';
             
             const pubgTotal = records.filter(r => r.game === 'PUBG').reduce((sum, r) => sum + (parseFloat(r.salePrice) || 0), 0);
             const mlbbTotal = records.filter(r => r.game === 'MLBB').reduce((sum, r) => sum + (parseFloat(r.salePrice) || 0), 0);
+            
+            // Calculate total expenses (အထွက် Note စုစုပေါင်း)
             const expenseTotal = records.filter(r => r.game === 'ExpenseNote').reduce((sum, r) => sum + (parseFloat(r.salePrice) || 0), 0);
 
             let customGamesTotal = 0;
@@ -473,6 +399,7 @@
                     </div>`;
             });
 
+            // Calculate Grand Sales total of all games (Excluding Expense Note)
             const grandTotal = pubgTotal + mlbbTotal + customGamesTotal;
 
             accumulativeArea.innerHTML = `
