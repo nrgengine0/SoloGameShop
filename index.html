@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="my">
 <head>
@@ -34,6 +35,11 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .glass-panel { background: rgba(31, 41, 55, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        /* Iframe height configuration to fit screens perfectly inside app */
+        .iframe-container { height: calc(100vh - 120px); }
+        @media (min-width: 1024px) {
+            .iframe-container { height: calc(100vh - 100px); }
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 h-screen flex relative overflow-hidden selection:bg-indigo-500 selection:text-white">
@@ -65,15 +71,15 @@
                 <!-- Custom Games Menu Container -->
                 <div id="customGamesMenu"></div>
 
-                <!-- Game Items ဝယ်ရန် Menu (Open safely in external tab to prevent "Refused to connect" error) -->
+                <!-- Game Items ဝယ်ရန် Menu (Embedded inside the App Workspace) -->
                 <li class="pt-4 pb-1"><span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">🛒 Game Items ဝယ်ရန်</span></li>
                 <li>
-                    <a href="https://www.smile.one/br/" target="_blank" onclick="if(window.innerWidth < 1024) toggleSidebar();" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700">
+                    <a href="#" id="menuSmileOne" onclick="switchView('SmileOne')" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700">
                         <i class="fa-solid fa-cart-shopping w-6 text-emerald-400"></i> Smile One
                     </a>
                 </li>
                 <li>
-                    <a href="https://www.midasbuy.com/midasbuy/mm" target="_blank" onclick="if(window.innerWidth < 1024) toggleSidebar();" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700">
+                    <a href="#" id="menuMidasbuy" onclick="switchView('Midasbuy')" class="block px-4 py-2 rounded-lg transition border-l-4 border-transparent hover:bg-gray-700">
                         <i class="fa-solid fa-store w-6 text-cyan-400"></i> Midasbuy
                     </a>
                 </li>
@@ -163,6 +169,27 @@
                 </div>
             </div>
 
+            <!-- In-App Browser Gateway Container -->
+            <div id="iframeSection" class="w-full rounded-2xl overflow-hidden glass-panel border border-gray-700/50 shadow-2xl iframe-container flex flex-col" style="display: none;">
+                <div class="bg-gray-800/90 p-3 flex flex-col sm:flex-row justify-between items-center border-b border-gray-700 text-xs gap-3">
+                    <div class="flex items-center space-x-2 text-gray-300">
+                        <span class="inline-flex h-2 w-2 rounded-full bg-green-500 animate-ping"></span>
+                        <span class="font-medium" id="browserStatusText">In-App View အဆင်ပြေစွာ အလုပ်လုပ်နေပါသည်</span>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="openFloatingWebview()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded transition shadow-md flex items-center gap-1.5">
+                            <i class="fa-solid fa-window-restore"></i> Floating Window ဖြင့်ဖွင့်ရန်
+                        </button>
+                        <button onclick="reloadFrame()" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold px-3 py-1.5 rounded transition">
+                            <i class="fa-solid fa-rotate-right"></i> Refresh Frame
+                        </button>
+                    </div>
+                </div>
+                <div class="flex-1 bg-gray-900 relative">
+                    <iframe id="gameWebFrame" class="w-full h-full bg-gray-900 border-0 rounded-b-2xl" src="" allowfullscreen></iframe>
+                </div>
+            </div>
+
         </div>
     </main>
 
@@ -176,6 +203,7 @@
                 <div id="standardInputsContainer">
                     <div class="mb-4">
                         <label class="block text-xs lg:text-sm text-gray-400 mb-1" id="modalCurrencyLabel">Amount</label>
+                        <!-- Change type dynamically via JS -->
                         <input type="number" id="currencyAmount" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 text-white outline-none">
                     </div>
                     <div>
@@ -212,6 +240,7 @@
         let currentView = 'Home'; 
         let records = [];
         let customGames = [];
+        let activeIframeUrl = '';
 
         window.addEventListener('load', () => {
             setTimeout(initFirebaseRealtime, 1500); 
@@ -331,7 +360,11 @@
             const HomeSection = document.getElementById('HomeSection');
             const tableSection = document.getElementById('tableSection');
             const settingsSection = document.getElementById('settingsSection');
+            const iframeSection = document.getElementById('iframeSection');
             const mobileSearch = document.getElementById('mobileSearchContainer');
+            const gameWebFrame = document.getElementById('gameWebFrame');
+            const workspace = document.getElementById('mainWorkspace');
+            const browserStatus = document.getElementById('browserStatusText');
             
             document.querySelectorAll('#sidebarMenu a').forEach(el => {
                 if(el.id) {
@@ -341,7 +374,10 @@
 
             headerActions.style.display = 'none'; HomeSection.style.display = 'none';
             tableSection.style.display = 'none'; settingsSection.style.display = 'none'; 
-            mobileSearch.style.display = 'none';
+            mobileSearch.style.display = 'none'; iframeSection.style.display = 'none';
+            
+            workspace.classList.remove('h-full', 'flex', 'flex-col');
+            gameWebFrame.src = ""; 
 
             if (view === 'Home') {
                 title.innerHTML = '<i class="fa-solid fa-house"></i> Home';
@@ -353,6 +389,24 @@
                 settingsSection.style.display = 'block';
                 document.getElementById('menuSettings').className = "block px-4 py-2 rounded-lg bg-gray-800 border-l-4 border-gray-500 transition";
                 renderSettingsCustomGamesList();
+            } else if (view === 'SmileOne') {
+                title.innerHTML = '<i class="fa-solid fa-cart-shopping"></i> Smile One';
+                iframeSection.style.display = 'flex';
+                workspace.classList.add('h-full', 'flex', 'flex-col');
+                document.getElementById('menuSmileOne').className = "block px-4 py-2 rounded-lg bg-gray-800 border-l-4 border-emerald-500 transition";
+                
+                activeIframeUrl = "https://www.smile.one/br/";
+                gameWebFrame.src = activeIframeUrl;
+                browserStatus.innerText = "Smile One ကို အက်ပ်ထဲတွင် စတင်ဖွင့်လှစ်နေပါသည် ...";
+            } else if (view === 'Midasbuy') {
+                title.innerHTML = '<i class="fa-solid fa-store"></i> Midasbuy';
+                iframeSection.style.display = 'flex';
+                workspace.classList.add('h-full', 'flex', 'flex-col');
+                document.getElementById('menuMidasbuy').className = "block px-4 py-2 rounded-lg bg-gray-800 border-l-4 border-cyan-500 transition";
+                
+                activeIframeUrl = "https://www.midasbuy.com/midasbuy/mm";
+                gameWebFrame.src = activeIframeUrl;
+                browserStatus.innerText = "Midasbuy ကို အက်ပ်ထဲတွင် စတင်ဖွင့်လှစ်နေပါသည် ...";
             } else {
                 headerActions.style.display = 'flex'; tableSection.style.display = 'block'; mobileSearch.style.display = 'block';
                 
@@ -373,6 +427,23 @@
                     }
                 }
                 renderTable();
+            }
+        }
+
+        // Bypasses Frame Restrictions using popup coordinates as a secure overlay (keeps user within context)
+        function openFloatingWebview() {
+            if (!activeIframeUrl) return;
+            const w = 1000;
+            const h = 800;
+            const left = (screen.width/2)-(w/2);
+            const top = (screen.height/2)-(h/2);
+            window.open(activeIframeUrl, "VOR_SOLO_Portal", `width=${w},height=${h},top=${top},left=${left},status=no,menubar=no,scrollbars=yes,resizable=yes`);
+        }
+
+        function reloadFrame() {
+            const gameWebFrame = document.getElementById('gameWebFrame');
+            if (activeIframeUrl) {
+                gameWebFrame.src = activeIframeUrl;
             }
         }
 
@@ -434,8 +505,9 @@
                 </div>`;
         }
 
-        function displayAmount(val) {
-            if (currentView === 'ExpenseNote') return val;
+        // MLBB နဲ့ ExpenseNote ဆိုရင်စာသားအတိုင်းဖော်ပြပေးမယ်၊ ကျန်တာကို ကိန်းဂဏန်း (ဥပမာ 1,000) လို့ပြမယ်
+        function displayAmount(val, viewGameType) {
+            if (viewGameType === 'ExpenseNote' || viewGameType === 'MLBB') return val;
             let num = parseFloat(val);
             return isNaN(num) ? val : num.toLocaleString();
         }
@@ -475,7 +547,7 @@
                 } else {
                     table.innerHTML += `
                         <tr class="hover:bg-gray-800/50 transition">
-                            <td class="p-3 lg:p-4 font-semibold text-white">${displayAmount(record.amount)}</td>
+                            <td class="p-3 lg:p-4 font-semibold text-white">${displayAmount(record.amount, currentView)}</td>
                             <td class="p-3 lg:p-4 text-emerald-400 font-medium">${saleVal.toLocaleString()} Ks</td>
                             <td class="p-3 lg:p-4 text-gray-400">${record.date}</td>
                             <td class="p-3 lg:p-4 text-center whitespace-nowrap">
@@ -506,6 +578,16 @@
             const content = document.getElementById('modalContent');
             const standardInputs = document.getElementById('standardInputsContainer');
             const expenseInputs = document.getElementById('expenseInputsContainer');
+            const amountInput = document.getElementById('currencyAmount');
+
+            // MLBB အတွက် Number အစား Text ရိုက်ထည့်နိုင်အောင် ပြောင်းလဲပေးခြင်း
+            if (currentView === 'MLBB') {
+                amountInput.type = "text";
+                amountInput.placeholder = "";
+            } else {
+                amountInput.type = "number";
+                amountInput.placeholder = "";
+            }
 
             modal.classList.remove('hidden'); modal.classList.add('flex');
             setTimeout(() => content.classList.remove('scale-95', 'opacity-0'), 10);
@@ -558,7 +640,12 @@
                 salePrice = parseFloat(document.getElementById('expenseCost').value) || 0; 
                 if (!amount) return alert('မှတ်တမ်းမှတ်စု အကြောင်းအရာ ရေးသားရန် လိုအပ်ပါသည်။');
             } else {
-                amount = parseFloat(document.getElementById('currencyAmount').value) || 0;
+                // MLBB အတွက် စာသားပါတဲ့အတိုင်း (String) မှတ်သားပေးမည်
+                if (currentView === 'MLBB') {
+                    amount = document.getElementById('currencyAmount').value.trim();
+                } else {
+                    amount = parseFloat(document.getElementById('currencyAmount').value) || 0;
+                }
                 salePrice = parseFloat(document.getElementById('salePrice').value) || 0;
             }
 
@@ -596,3 +683,4 @@
     </script>
 </body>
 </html>
+
