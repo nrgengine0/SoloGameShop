@@ -13,16 +13,18 @@
         import { getDatabase, ref, set, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         // Thint Ye Firebase Config fixed here!
-        const firebaseConfig = {
-            apiKey: "AIzaSyAtkK8QrsdAlT87VDZN4TNILGGYWyI5T6o",
-            authDomain: "vor-solo.firebaseapp.com",
-            databaseURL: "https://vor-solo-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "vor-solo",
-            storageBucket: "vor-solo.firebasestorage.app",
-            messagingSenderId: "856896766437",
-            appId: "1:856896766437:web:a30e42fd58cf5d1ce8ef0c",
-            measurementId: "G-GYH34JF85M"
-        };
+        
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDehQEf6UiyGAuoNgGP5BoPoVKJ8P7VqAE",
+  authDomain: "vor-solo-gameshop-4bb5b.firebaseapp.com",
+  databaseURL: "https://vor-solo-gameshop-4bb5b-default-rtdb.firebaseio.com",
+  projectId: "vor-solo-gameshop-4bb5b",
+  storageBucket: "vor-solo-gameshop-4bb5b.firebasestorage.app",
+  messagingSenderId: "877623693122",
+  appId: "1:877623693122:web:d90cf49a70975fd8ab42db",
+  measurementId: "G-SHN6YBSSV4"
+};
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
